@@ -26,6 +26,9 @@ const data = {
 // Public methods
 // Whatever we return from the module is public
 return {
+    getItems: function(){
+        return data.items;
+    },
   logData: function(){
       return data;
   }
@@ -38,9 +41,31 @@ return {
 
 // UI Controller
 const UIController = (function(){
+    // class or ID can be changed at any time, and to save us from changing each individual instance of it
+    // we can create the following object
+    const UISelectors = {
+        itemList: '#item-list'
+    }
 
     // Public methods
     return {
+        populateItemList: function(items){
+            // loop through the items and make each one a list item and insert to the ul
+            let html = '';
+
+            items.forEach(item => {
+                html += `<li class="collection-item" id="item-${item.id}">
+                <strong>${item.name}: </strong> <em>${item.calories} Calories</em>  
+                <!-- secondary-content == a materialize class to add something to a collection like an icon or text -->
+                <!-- <a href="#" class="secondary-content">
+                    <i class="edit-item fa fa-pencil"></i>
+                </a>
+            </li>`
+            })
+
+            // Insert list item
+            document.querySelector(UISelectors.itemList).innerHTML = html;
+        }
 
     }
 
@@ -58,7 +83,12 @@ const AppController = (function(ItemCtrl, UICtrl){
     // e.g. make sure the edit state is clear a new version of the app
     return {
         init: function(){
-            console.log('Initializing App...')
+
+            // Fetch items from data structure
+            const items = ItemCtrl.getItems();
+
+            // Populate list with items
+            UIController.populateItemList(items);
         }
     }
 
