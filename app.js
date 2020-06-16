@@ -1,4 +1,49 @@
 // Storage Controller
+// could have used session storage but the items would go away when the broswer is closed
+const StorageController = (function(){
+
+    // Public Methods
+    return {
+        storeItem: function(item){
+            let items;
+            
+            // before we put something in local storage, since we're puttin in an array of objects
+            // we have to turn it into a string with JSON.stringify, then when we pull it out we need to turn it back
+            // into an object with JSON.parse, we wouldnt hve to do this if we were storing single strings
+
+            // Check if any items in local storage 
+            if(localStorage.getItem('items') === null){
+                // if nothing make it equal to an empty array
+                items = [];
+                // push new item - not in local storage yet just in this local variable need to set
+                items.push(item);
+                // set local storage
+                localStorage.setItem('items', JSON.stringify(items));
+            } else {
+                // if theres something in ls get the item
+                items = JSON.parse(localStorage.getItem('items'));
+
+                // Push new item to the converted JSON object
+                items.push(item);
+
+                // Reset local storage back to a string
+                localStorage.setItem('items', JSON.stringify(items));
+            }
+        },
+        getItemsFromStorage: function(){
+            let items;
+            if(localStorage.getItem('items') === null){
+                // if nothings there set item to nothing
+                items = [];
+
+            } else {
+                items = JSON.parse(localStorage.getItem('items'));
+            }
+            return items;
+        }
+
+    }
+})();
 
 // Item Controller
 const ItemController   = (function(){
@@ -13,11 +58,14 @@ const Item = function(id, name, calories){
 // Data Structure / State
 // All this data is hidden
 const data = {
-    items: [
-        // {id: 0, name: 'steak', calories: 1200},
-        // {id: 1, name: 'egg', calories: 300},
-        // {id: 2, name: 'rice', calories: 200}
-    ],
+    // since we have set our local storage with items, we wont need this array of objects
+    // items: [
+    //     // {id: 0, name: 'steak', calories: 1200},
+    //     // {id: 1, name: 'egg', calories: 300},
+    //     // {id: 2, name: 'rice', calories: 200}
+    // ],
+
+    items: StorageController.getItemsFromStorage(),
     // currentItem = the item selcted to be updated
     currentItem: null,
     totalCalories: 0
@@ -286,7 +334,7 @@ const UIController = (function(){
 
 // App Controller
 //Insert the other controllers into the main controller
-const AppController = (function(ItemController, UIController){
+const AppController = (function(ItemController, StorageController, UIController){
     // Load Event listeners
     const loadEventListeners = function(){
         // Get UI Selectors
@@ -342,6 +390,10 @@ const AppController = (function(ItemController, UIController){
 
             //Add total calories to UI
             UIController.showTotalCalories(totalCalories);
+
+            // Store in local storage
+            // the newItem is coming from the itemController, few lines above we returned addItem to bariable newItem
+            StorageController.storeItem(newItem);
 
             // Clear fields
             UIController.clearInput();
@@ -448,7 +500,7 @@ const AppController = (function(ItemController, UIController){
          const totalCalories = ItemController.getTotalCalories();
 
          //Add total calories to UI
-         UIController.showTotalCalories(totalCalories);
+         UIController.showTotalCalories(totalCalories); 
  
          UIController.clearEditState();
 
@@ -495,7 +547,7 @@ const AppController = (function(ItemController, UIController){
         }
     }
 
-})(ItemController, UIController);
+})(ItemController, StorageController, UIController);
 
 // Initialize App
 AppController.init();
