@@ -51,6 +51,22 @@ return {
        data.items.push(newItem);
        return newItem;
     },
+    getTotalCalories: function(){
+        let total = 0;
+
+        // loop through items and add the calories
+        data.items.forEach(item =>{
+            total += item.calories;
+            // or total = total + item.calories;
+        });
+
+        // Set total calories in the data structure
+        data.totalCalories = total;
+
+        // return total
+        return data.totalCalories;
+
+    },
     // Check our data structure on the console
   logData: function(){
       return data;
@@ -70,7 +86,9 @@ const UIController = (function(){
         itemList: '#item-list',
         addBtn: '.add-btn',
         itemNameInput:'#item-name',
-        itemCaloriesInput:'#item-calories'
+        itemCaloriesInput:'#item-calories',
+        // span tag
+        totalCalories: '.total-calories'
     }
 
     // Public methods
@@ -122,8 +140,11 @@ const UIController = (function(){
             document.querySelector(UISelectors.itemCaloriesInput).value = '';
         },
         hideList: function(){
-            // hide the list UI - get rid of the default grey line with no items
+            // hide the list UI - get rid of the default grey line with no items 
             document.querySelector(UISelectors.itemList).style.display = 'none';
+        },
+        showTotalCalories: function(totalCalories){
+            document.querySelector(UISelectors.totalCalories).textContent = totalCalories;
         },
         // Since UI selectors is not made public we need to return it here
         getSelectors: function(){
@@ -162,6 +183,12 @@ const AppController = (function(ItemCtrl, UICtrl){
 
             // Add item to UI list
             UIController.addListItem(newItem);
+
+            // Get Total Calories
+            const totalCalories = ItemController.getTotalCalories();
+
+            //Add total calories to UI
+            UIController.showTotalCalories(totalCalories);
 
             // Clear fields
             UIController.clearInput();
