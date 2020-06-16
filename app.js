@@ -66,6 +66,26 @@ return {
         return found;
 
     },
+    updateItem: function(name, calories){
+        // Calories to number
+        calories = parseInt(calories);
+        // do a similar approach like above
+        let found = null;
+
+
+        // rememeber once we click on edit, the item gets put into the currentItem
+        data.items.forEach(function(item){
+            if(item.id === data.currentItem.id){
+                //make it equal the new passed in value
+                item.name = name;
+                item.calories = calories;
+                found = item;
+            }
+        });
+        return found;
+        // will update it in the data structure not the UI
+        // check it via ItemCtrl.logData() on the console
+    },
     setCurrentItem: function(item){
         data.currentItem = item;
         // check if its working by logging itemController.logData() onto the console
@@ -107,6 +127,7 @@ const UIController = (function(){
     // we can create the following object
     const UISelectors = {
         itemList: '#item-list',
+        listItems: '#item-list li',
         addBtn: '.add-btn',
         updateBtn: '.update-btn',
         deleteBtn: '.delete-btn',
@@ -160,6 +181,27 @@ const UIController = (function(){
             // Insert item - adds it to the DOM
             // insertAdjacentElment-inserts a given element node at a given position relative to the element it is invoked upon.
             document.querySelector(UISelectors.itemList).insertAdjacentElement('beforeend', li);
+        },
+        updateListItem: function(item){
+            // we want the li's in the ul
+            let listItems = document.querySelectorAll(UISelectors.listItems);
+
+            // turn node list into array
+            listItems = Array.from(listItems);
+
+            listItems.forEach(function(listItem){
+                const itemID = listItem.getAttribute('id');
+
+                // if this is true then thats the one that we want to update
+                if(itemID === `item-${item.id}`){
+                    document.querySelector(`#${itemID}`).innerHTML = `<strong>${item.name}: </strong> <em>${item.calories} Calories</em>  
+                    <!-- secondary-content == a materialize class to add something to a collection like an icon or text --> 
+                     <a href="#" class="secondary-content">
+                        <i class="edit-item fa fa-pencil"></i>
+                    </a>`;
+
+                }
+            });
         },
         clearInput: function(){
             document.querySelector(UISelectors.itemNameInput).value = '';
@@ -217,10 +259,23 @@ const AppController = (function(ItemController, UIController){
         const UISelectors = UIController.getSelectors();
 
         // Add Item Event
-        document.querySelector(UISelectors.addBtn).addEventListener('click', itemAddSubmit)
+        document.querySelector(UISelectors.addBtn).addEventListener('click', itemAddSubmit);
+
+        // Disable submit on enter
+        document.addEventListener('keypress', function(e){
+            // some older browsers dont support keycode so we need the "which"
+            if(e.keycode === 13 || e.which === 13){
+                // basically disabling the enter key
+                e.preventDefault();
+                return false;
+            }
+        })
 
         // Edit icon click event
-        document.querySelector(UISelectors.itemList).addEventListener('click', itemUpdateSubmit);
+        document.querySelector(UISelectors.itemList).addEventListener('click', itemEditClick);
+
+        // Update item event
+        document.querySelector(UISelectors.updateBtn).addEventListener('click', itemUpdateSubmit);
     }
 
     // Add Item submit
@@ -250,8 +305,8 @@ const AppController = (function(ItemController, UIController){
         e.preventDefault();
     }
 
-    // Update item submit
-    const itemUpdateSubmit = function(e){
+    // Click edit item
+    const itemEditClick = function(e){
         // we need to actually target the edit button. edit button has class edit-item
         // We have to do this because the edit button isnt initially loaded when the page loads
         // its added after the page loads so we need to use event delegation
@@ -288,6 +343,31 @@ const AppController = (function(ItemController, UIController){
         }
         e.preventDefault();
     }
+
+    // Update item submit
+    const itemUpdateSubmit = e => {
+        // Get item input
+        const input = UIController.getItemInput();
+
+        // Update item
+        const updatedItem = ItemController.updateItem(input.name, input.calories);
+
+        // Update UI
+        UIController.updateListItem(updatedItem);
+
+        // TOTAL CALS ARE UPDATED WHEN ITEM IS UPDATED
+        // Get Total Calories
+        const totalCalories = ItemController.getTotalCalories();
+
+        //Add total calories to UI
+        UIController.showTotalCalories(totalCalories);
+
+        UIController.clearEditState();
+
+
+        e.preventDefault();
+    }
+
 
 
     // Public Methods
