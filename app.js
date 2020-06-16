@@ -51,6 +51,29 @@ return {
        data.items.push(newItem);
        return newItem;
     },
+    getItemById: function(id){
+        let found = null;
+
+        // loop through items
+        // if item.id is equal to the id that we pass in, then set found equal to the item
+        data.items.forEach(function(item){
+            // if the item 
+            if(item.id === id){
+                found = item;
+            }
+
+        });
+        return found;
+
+    },
+    setCurrentItem: function(item){
+        data.currentItem = item;
+        // check if its working by logging itemController.logData() onto the console
+        // check for the value in currentItem
+    },
+    getCurrentItem: function(){
+        return data.currentItem;
+    },
     getTotalCalories: function(){
         let total = 0;
 
@@ -85,6 +108,9 @@ const UIController = (function(){
     const UISelectors = {
         itemList: '#item-list',
         addBtn: '.add-btn',
+        updateBtn: '.update-btn',
+        deleteBtn: '.delete-btn',
+        backBtn: '.back-btn',
         itemNameInput:'#item-name',
         itemCaloriesInput:'#item-calories',
         // span tag
@@ -139,12 +165,37 @@ const UIController = (function(){
             document.querySelector(UISelectors.itemNameInput).value = '';
             document.querySelector(UISelectors.itemCaloriesInput).value = '';
         },
+        addItemToForm: function(){
+            document.querySelector(UISelectors.itemNameInput).value = ItemController.getCurrentItem().name;
+            document.querySelector(UISelectors.itemCaloriesInput).value = ItemController.getCurrentItem().calories;
+            // show buttons, we can just copy clearEditState and modify it
+            UIController.showEditState();
+        },
+
         hideList: function(){
             // hide the list UI - get rid of the default grey line with no items 
             document.querySelector(UISelectors.itemList).style.display = 'none';
         },
         showTotalCalories: function(totalCalories){
             document.querySelector(UISelectors.totalCalories).textContent = totalCalories;
+        },
+        clearEditState: function(){
+            // call the clear input function above
+            UIController.clearInput();
+            // hide the update, delete. and back button
+            document.querySelector(UISelectors.updateBtn).style.display = 'none';
+            document.querySelector(UISelectors.deleteBtn).style.display = 'none';
+            document.querySelector(UISelectors.backBtn).style.display = 'none';
+            document.querySelector(UISelectors.addBtn).style.display = 'inline';
+
+        },
+        showEditState: function(){
+            // hide the update, delete. and back button
+            document.querySelector(UISelectors.updateBtn).style.display = 'inline';
+            document.querySelector(UISelectors.deleteBtn).style.display = 'inline';
+            document.querySelector(UISelectors.backBtn).style.display = 'inline';
+            document.querySelector(UISelectors.addBtn).style.display = 'none';
+
         },
         // Since UI selectors is not made public we need to return it here
         getSelectors: function(){
@@ -159,7 +210,7 @@ const UIController = (function(){
 
 // App Controller
 //Insert the other controllers into the main controller
-const AppController = (function(ItemCtrl, UICtrl){
+const AppController = (function(ItemController, UIController){
     // Load Event listeners
     const loadEventListeners = function(){
         // Get UI Selectors
@@ -167,6 +218,9 @@ const AppController = (function(ItemCtrl, UICtrl){
 
         // Add Item Event
         document.querySelector(UISelectors.addBtn).addEventListener('click', itemAddSubmit)
+
+        // Edit icon click event
+        document.querySelector(UISelectors.itemList).addEventListener('click', itemUpdateSubmit);
     }
 
     // Add Item submit
@@ -196,14 +250,56 @@ const AppController = (function(ItemCtrl, UICtrl){
         e.preventDefault();
     }
 
+    // Update item submit
+    const itemUpdateSubmit = function(e){
+        // we need to actually target the edit button. edit button has class edit-item
+        // We have to do this because the edit button isnt initially loaded when the page loads
+        // its added after the page loads so we need to use event delegation
+        if(e.target.classList.contains('edit-item')){
+            // We want to add the item we want to edit to the currentItem variable we created in our data structure
+            // which is initially set to null
+            
+            // Get list item id (item-0, item-1)
+            // from the target i tag we go up a parent elment then up again
+            const listId = e.target.parentNode.parentNode.id;
+            // to check console.log(listID)
+
+            // now we need to get the regular id e.g. 0, 1
+            // Break into an array
+            // split() method is used to split a string into an array of substrings, and returns the new array
+            // e.g. [item, 0]
+            const listIdArr = listId.split('-');
+
+            // get the actual id - since it will be the second value in the array
+            const id = parseInt(listIdArr[1]);
+
+            // Get item
+            const itemToEdit = ItemController.getItemById(id);
+            // check if it works, should return the entrire item object - console.log(itemToEdit);
+
+            // Set current item
+            // pass the item object into setCurrentItem
+            ItemController.setCurrentItem(itemToEdit);
+
+            // Add item to form
+            // we dont have to pass in item since its in the currentItem variable
+            UIController.addItemToForm();
+
+        }
+        e.preventDefault();
+    }
+
+
     // Public Methods
     // return initilizer function - anything we need to run when the application loads
     // e.g. make sure the edit state is clear a new version of the app
     return {
         init: function(){
+            // Clear edit state / set initial set
+            UIController.clearEditState();
 
             // Fetch items from data structure
-            const items = ItemCtrl.getItems();
+            const items = ItemController.getItems();
 
             // Check if any items
             if(items.length === 0){
@@ -215,6 +311,12 @@ const AppController = (function(ItemCtrl, UICtrl){
              UIController.populateItemList(items);
 
             }
+
+            // Will fetch from local storage
+            // Get Total Calories
+            const totalCalories = ItemController.getTotalCalories();
+             //Add total calories to UI
+             UIController.showTotalCalories(totalCalories);
 
             // copy this above
             // // Populate list with items
