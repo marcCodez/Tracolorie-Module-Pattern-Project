@@ -86,6 +86,23 @@ return {
         // will update it in the data structure not the UI
         // check it via ItemCtrl.logData() on the console
     },
+    deleteItem: function(id){
+        // Get ids
+        // using map method - like forEach but returns something
+        const ids = data.items.map(function(item){
+            return item.id;
+        });
+
+        // Get index - to get the position of the item
+        const index = ids.indexOf(id);
+
+        // Remove item - remove 1 item at that index
+        data.items.splice(index, 1);
+        
+    },
+    clearAllItems: function(){
+        data.items = [];
+    },
     setCurrentItem: function(item){
         data.currentItem = item;
         // check if its working by logging itemController.logData() onto the console
@@ -132,6 +149,7 @@ const UIController = (function(){
         updateBtn: '.update-btn',
         deleteBtn: '.delete-btn',
         backBtn: '.back-btn',
+        clearBtn: '.clear-btn',
         itemNameInput:'#item-name',
         itemCaloriesInput:'#item-calories',
         // span tag
@@ -199,9 +217,16 @@ const UIController = (function(){
                      <a href="#" class="secondary-content">
                         <i class="edit-item fa fa-pencil"></i>
                     </a>`;
-
+ 
                 }
             });
+        },
+        deleteListItem: function(id){
+            const itemID = `#item-${id}`;
+            const item = document.querySelector(itemID);
+            // .remove() remove object from the tree it belongs to
+            item.remove();
+
         },
         clearInput: function(){
             document.querySelector(UISelectors.itemNameInput).value = '';
@@ -213,7 +238,16 @@ const UIController = (function(){
             // show buttons, we can just copy clearEditState and modify it
             UIController.showEditState();
         },
+        removeItems: function(){
+            let listItems = document.querySelectorAll(UISelectors.listItems);
 
+            // Turn Node list into array to loop through it - like update
+            listItems = Array.from(listItems);
+
+            listItems.forEach(function(item){
+                item.remove();
+            });
+        },
         hideList: function(){
             // hide the list UI - get rid of the default grey line with no items 
             document.querySelector(UISelectors.itemList).style.display = 'none';
@@ -276,6 +310,16 @@ const AppController = (function(ItemController, UIController){
 
         // Update item event
         document.querySelector(UISelectors.updateBtn).addEventListener('click', itemUpdateSubmit);
+
+        // Delete item event
+        document.querySelector(UISelectors.deleteBtn).addEventListener('click', itemDeleteSubmit);
+
+        // Back button event
+        // we can just use the clearEditState function again
+        document.querySelector(UISelectors.backBtn).addEventListener('click', UIController.clearEditState);
+
+        // Clear items event
+        document.querySelector(UISelectors.clearBtn).addEventListener('click', clearAllItemsClick);
     }
 
     // Add Item submit
@@ -366,6 +410,50 @@ const AppController = (function(ItemController, UIController){
 
 
         e.preventDefault();
+    }
+
+    // Delete button event
+    const itemDeleteSubmit = function(e) {
+        // Get current item
+        const currentItem = ItemController.getCurrentItem();
+
+        // Delete from data structure
+        ItemController.deleteItem(currentItem.id);
+
+        // Delete from UI
+        UIController.deleteListItem(currentItem.id);
+
+        // Update Calories again when we delete an item
+         // Get Total Calories
+         const totalCalories = ItemController.getTotalCalories();
+
+         //Add total calories to UI
+         UIController.showTotalCalories(totalCalories);
+ 
+         UIController.clearEditState();
+
+        e.preventDefault();
+    }
+
+    // Clear items event
+    const clearAllItemsClick = function() {
+        // Delete all items from data structure
+        ItemController.clearAllItems();
+
+        // Remove from UI
+        UIController.removeItems();
+
+         // Update Calories again when we click the clear button
+         // Get Total Calories
+         const totalCalories = ItemController.getTotalCalories();
+
+         //Add total calories to UI
+         UIController.showTotalCalories(totalCalories);
+ 
+         UIController.clearEditState();
+
+         // Hide Ul grey bar again
+         UIController.hideList();
     }
 
 
