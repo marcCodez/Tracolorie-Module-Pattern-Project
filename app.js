@@ -40,6 +40,38 @@ const StorageController = (function(){
                 items = JSON.parse(localStorage.getItem('items'));
             }
             return items;
+        },
+        updateItemStorage: function(updatedItem){
+            let items = JSON.parse(localStorage.getItem('items'));
+
+            // loop through the items in the storage
+            // if the id of the passed item is equal to the current id in local storage
+            items.forEach(function(item, index){
+                if(updatedItem.id === item.id){
+                    // delete 1 item from whatever the index is and replace it with updatedItem
+                    items.splice(index, 1, updatedItem);
+                }
+            });
+            // Reset local storage again back to a string
+            localStorage.setItem('items', JSON.stringify(items));
+        },
+        deleteItemFromStorage: function(id){
+            // similar to update except we're not replacing the spliced value
+            let items = JSON.parse(localStorage.getItem('items'));
+
+            // loop through the items in the storage
+            // if the id of the passed item is equal to the current id in local storage
+            items.forEach(function(item, index){
+                if(id === item.id){
+                    // delete 1 item from whatever the index is
+                    items.splice(index, 1);
+                }
+            });
+            // Reset local storage again back to a string
+            localStorage.setItem('items', JSON.stringify(items));
+        },
+        clearItemsFromStorage: function(){
+            localStorage.removeItem('items');
         }
 
     }
@@ -458,6 +490,11 @@ const AppController = (function(ItemController, StorageController, UIController)
         //Add total calories to UI
         UIController.showTotalCalories(totalCalories);
 
+        // Update local storage
+        // pass in the updatedItem we created above, which grabs the updated item from ItemController
+        StorageController.updateItemStorage(updatedItem);
+
+
         UIController.clearEditState();
 
 
@@ -481,7 +518,11 @@ const AppController = (function(ItemController, StorageController, UIController)
 
          //Add total calories to UI
          UIController.showTotalCalories(totalCalories);
- 
+
+         // Delete from local storage
+         StorageController.deleteItemFromStorage(currentItem.id);
+
+        // Clear all input and hide buttons back to default state
          UIController.clearEditState();
 
         e.preventDefault();
@@ -492,16 +533,20 @@ const AppController = (function(ItemController, StorageController, UIController)
         // Delete all items from data structure
         ItemController.clearAllItems();
 
-        // Remove from UI
-        UIController.removeItems();
-
          // Update Calories again when we click the clear button
          // Get Total Calories
          const totalCalories = ItemController.getTotalCalories();
 
          //Add total calories to UI
          UIController.showTotalCalories(totalCalories); 
- 
+
+        // Remove from UI
+        UIController.removeItems();
+
+        // Clear from local storage
+        StorageController.clearItemsFromStorage();
+        
+        // Clear all input and hide buttons back to default state
          UIController.clearEditState();
 
          // Hide Ul grey bar again
